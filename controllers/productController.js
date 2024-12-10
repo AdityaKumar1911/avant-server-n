@@ -6,7 +6,7 @@ const addProduct = async (req, res) => {
     // Get uploaded image paths
     const imagePaths = req.files.map((file) => file.path);
 
-    // Get other product details from the request body
+    // Extract product details from the request body
     const {
       name,
       description,
@@ -32,13 +32,14 @@ const addProduct = async (req, res) => {
     // Save the new product to the database
     await newProduct.save();
 
-    // Send response
+    // Send success response
     res.status(201).json({
       message: "Product added successfully!",
       product: newProduct,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Error adding product:", error);
+    res.status(500).json({ message: "Error adding product", error: error.message });
   }
 };
 
@@ -48,7 +49,8 @@ const getAllProducts = async (req, res) => {
     const products = await Product.find();
     res.json(products);
   } catch (error) {
-    res.status(500).json({ message: "Error fetching products", error });
+    console.error("Error fetching products:", error);
+    res.status(500).json({ message: "Error fetching products", error: error.message });
   }
 };
 
@@ -61,26 +63,25 @@ const getProductById = async (req, res) => {
     }
     res.json(product);
   } catch (error) {
-    res.status(500).json({ message: "Error fetching product", error });
+    console.error("Error fetching product by ID:", error);
+    res.status(500).json({ message: "Error fetching product", error: error.message });
   }
 };
 
 // Update a product
 const updateProduct = async (req, res) => {
-  const { id } = req.params; // Get product ID from request params
-  const updatedData = req.body; // Get updated data from the request body
-  const updatedImages = req.files; // Get the uploaded images (if any)
+  const { id } = req.params;
+  const updatedData = req.body;
+  const updatedImages = req.files?.map((file) => file.path); // Map uploaded images
 
   try {
-    // If images are uploaded, update the images array
-    if (updatedImages && updatedImages.length > 0) {
-      updatedData.images = updatedImages.map((file) => file.filename);
+    // Include uploaded images if provided
+    if (updatedImages?.length) {
+      updatedData.images = updatedImages;
     }
 
     // Find the product by ID and update it
-    const product = await Product.findByIdAndUpdate(id, updatedData, {
-      new: true,
-    });
+    const product = await Product.findByIdAndUpdate(id, updatedData, { new: true });
 
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
@@ -88,9 +89,8 @@ const updateProduct = async (req, res) => {
 
     res.status(200).json({ message: "Product updated successfully", product });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error updating product", error: error.message });
+    console.error("Error updating product:", error);
+    res.status(500).json({ message: "Error updating product", error: error.message });
   }
 };
 
@@ -104,7 +104,8 @@ const deleteProduct = async (req, res) => {
 
     res.json({ message: "Product deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: "Error deleting product", error });
+    console.error("Error deleting product:", error);
+    res.status(500).json({ message: "Error deleting product", error: error.message });
   }
 };
 
@@ -121,7 +122,8 @@ const getProductImagesById = async (req, res) => {
       images: product.images,
     });
   } catch (error) {
-    res.status(500).json({ message: "Error fetching product images", error });
+    console.error("Error fetching product images:", error);
+    res.status(500).json({ message: "Error fetching product images", error: error.message });
   }
 };
 
@@ -131,5 +133,5 @@ module.exports = {
   getProductById,
   updateProduct,
   deleteProduct,
-  getProductImagesById
+  getProductImagesById,
 };
